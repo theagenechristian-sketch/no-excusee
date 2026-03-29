@@ -5,411 +5,172 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>No Excuse — Connexion</title>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
- 
     :root {
-      --bg: #252829;
-      --bg2: #1e2021;
-      --surface: rgba(240,237,232,0.05);
-      --border: rgba(240,237,232,0.1);
-      --text: #f0ede8;
-      --text2: rgba(240,237,232,0.5);
-      --text3: rgba(240,237,232,0.25);
-      --accent: rgb(225, 158, 134);
-      --accent2: rgba(192,118,90,0.15);
+      --bg: #252829; --bg2: #1e2021; --surface: rgba(240,237,232,0.05);
+      --border: rgba(240,237,232,0.1); --text: #f0ede8;
+      --text2: rgba(240,237,232,0.5); --text3: rgba(240,237,232,0.25);
+      --accent: #c0765a;
     }
- 
-    html, body {
-      height: 100%;
-      font-family: 'Barlow', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
- 
-    .page {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      min-height: 100vh;
-    }
- 
-    /* ── GAUCHE ── */
-    .left {
-      position: relative;
-      overflow: hidden;
-    }
- 
-    .left-img {
-      position: absolute;
-      inset: 0;
-      background-image: url('https://images.unsplash.com/photo-1511649475669-e288648b2339?w=900&q=80');
-      background-size: cover;
-      background-position: center 30%;
-      transform: scale(1.05);
-      animation: zoomOut 8s ease forwards;
-    }
- 
-    @keyframes zoomOut {
-      from { transform: scale(1.08); }
-      to   { transform: scale(1.0); }
-    }
- 
-    .left-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(20,22,23,0.88) 0%, rgba(20,22,23,0.35) 100%);
-    }
- 
-    .left-content {
-      position: relative;
-      z-index: 2;
-      padding: 48px 52px;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
- 
-    .logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text);
-    }
- 
+    html, body { height: 100%; font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); }
+    .page { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+    .left { position: relative; overflow: hidden; }
+    .left-img { position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1511649475669-e288648b2339?w=900&q=80'); background-size: cover; background-position: center 30%; transform: scale(1.05); animation: zoomOut 8s ease forwards; }
+    @keyframes zoomOut { from { transform: scale(1.08); } to { transform: scale(1.0); } }
+    .left-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(20,22,23,0.88) 0%, rgba(20,22,23,0.35) 100%); }
+    .left-content { position: relative; z-index: 2; padding: 48px 52px; height: 100%; display: flex; flex-direction: column; justify-content: space-between; }
+    .logo { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); }
     .logo-dot { color: var(--accent); }
- 
-    .left-phrase {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 58px;
-      font-weight: 700;
-      line-height: 0.95;
-      letter-spacing: -0.01em;
-      text-transform: uppercase;
-      color: var(--text);
-    }
- 
-    .left-phrase em {
-      font-style: normal;
-      color: rgba(240,237,232,0.2);
-    }
- 
-    .left-foot {
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text3);
-    }
- 
-    /* ── DROITE ── */
-    .right {
-      background: var(--bg2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 52px;
-      animation: fadeUp 0.6s ease both;
-      animation-delay: 0.2s;
-    }
- 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
- 
+    .left-phrase { font-family: 'Barlow Condensed', sans-serif; font-size: 58px; font-weight: 700; line-height: 0.95; letter-spacing: -0.01em; text-transform: uppercase; color: var(--text); }
+    .left-phrase em { font-style: normal; color: rgba(240,237,232,0.2); }
+    .left-foot { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text3); }
+    .right { background: var(--bg2); display: flex; align-items: center; justify-content: center; padding: 48px 52px; animation: fadeUp 0.6s ease both; animation-delay: 0.2s; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     .form-wrap { width: 100%; max-width: 360px; }
- 
-    /* tabs */
-    .tabs {
-      display: flex;
-      gap: 0;
-      margin-bottom: 40px;
-      border-bottom: 0.5px solid var(--border);
-    }
- 
-    .tab {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding-bottom: 16px;
-      margin-right: 32px;
-      color: var(--text3);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      transition: color .2s, border-color .2s;
-    }
- 
-    .tab.active {
-      color: var(--text);
-      border-bottom-color: var(--accent);
-    }
- 
-    /* champs */
+    .tabs { display: flex; margin-bottom: 40px; border-bottom: 0.5px solid var(--border); }
+    .tab { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; padding-bottom: 16px; margin-right: 32px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
     .field { margin-bottom: 20px; }
- 
-    .field label {
-      display: block;
-      font-size: 10px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--text3);
-      margin-bottom: 8px;
-    }
- 
-    .field input {
-      width: 100%;
-      background: var(--surface);
-      border: 0.5px solid var(--border);
-      border-radius: 6px;
-      padding: 13px 16px;
-      font-family: 'Barlow', sans-serif;
-      font-size: 14px;
-      color: var(--text);
-      outline: none;
-      transition: border-color .2s, background .2s;
-    }
- 
+    .field label { display: block; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+    .field input { width: 100%; background: var(--surface); border: 0.5px solid var(--border); border-radius: 6px; padding: 13px 16px; font-family: 'Barlow', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color .2s, background .2s; }
     .field input::placeholder { color: var(--text3); }
- 
-    .field input:focus {
-      border-color: var(--accent);
-      background: rgba(192,118,90,0.06);
-    }
- 
-    .forgot {
-      display: block;
-      text-align: right;
-      font-size: 11px;
-      color: var(--text3);
-      margin-top: -12px;
-      margin-bottom: 24px;
-      cursor: pointer;
-      letter-spacing: 0.04em;
-      transition: color .2s;
-    }
- 
+    .field input:focus { border-color: var(--accent); background: rgba(192,118,90,0.06); }
+    .forgot { display: block; text-align: right; font-size: 11px; color: var(--text3); margin-top: -12px; margin-bottom: 24px; cursor: pointer; transition: color .2s; }
     .forgot:hover { color: var(--text2); }
- 
-    /* bouton principal */
-    .btn-main {
-      width: 100%;
-      padding: 14px;
-      background: var(--accent);
-      border: none;
-      border-radius: 6px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #f0ede8;
-      cursor: pointer;
-      transition: opacity .2s, transform .15s;
-    }
- 
+    .btn-main { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #f0ede8; cursor: pointer; transition: opacity .2s, transform .15s; }
     .btn-main:hover { opacity: 0.88; }
     .btn-main:active { transform: scale(0.98); }
- 
-    /* séparateur */
-    .or-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 24px 0;
-    }
- 
+    .btn-main:disabled { opacity: 0.5; }
+    .or-row { display: flex; align-items: center; gap: 12px; margin: 24px 0; }
     .or-line { flex: 1; height: 0.5px; background: var(--border); }
- 
-    .or-txt {
-      font-size: 11px;
-      color: var(--text3);
-      letter-spacing: 0.1em;
-    }
- 
-    /* bouton Google */
-    .btn-google {
-      width: 100%;
-      padding: 13px;
-      background: transparent;
-      border: 0.5px solid var(--border);
-      border-radius: 6px;
-      font-family: 'Barlow', sans-serif;
-      font-size: 13px;
-      color: var(--text2);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      transition: background .2s, border-color .2s;
-    }
- 
-    .btn-google:hover {
-      background: var(--surface);
-      border-color: rgba(240,237,232,0.2);
-    }
- 
+    .or-txt { font-size: 11px; color: var(--text3); letter-spacing: 0.1em; }
+    .btn-google { width: 100%; padding: 13px; background: transparent; border: 0.5px solid var(--border); border-radius: 6px; font-family: 'Barlow', sans-serif; font-size: 13px; color: var(--text2); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: background .2s, border-color .2s; }
+    .btn-google:hover { background: var(--surface); border-color: rgba(240,237,232,0.2); }
     .g-icon { width: 16px; height: 16px; flex-shrink: 0; }
- 
-    /* message erreur */
-    .error-msg {
-      font-size: 12px;
-      color: #ff000454;
-      margin-top: 10px;
-      min-height: 16px;
-      letter-spacing: 0.03em;
-    }
- 
-    /* responsive */
-    @media (max-width: 720px) {
-      .page { grid-template-columns: 1fr; }
-      .left { display: none; }
-      .right { min-height: 100vh; }
-    }
+    .msg { font-size: 12px; margin-top: 12px; min-height: 16px; letter-spacing: 0.03em; }
+    .msg.error { color: #e07a5f; }
+    .msg.success { color: #7ec89a; }
+    @media (max-width: 720px) { .page { grid-template-columns: 1fr; } .left { display: none; } .right { min-height: 100vh; } }
   </style>
 </head>
 <body>
- 
 <div class="page">
- 
-  <!-- GAUCHE -->
   <div class="left">
     <div class="left-img"></div>
     <div class="left-overlay"></div>
     <div class="left-content">
       <div class="logo">No<span class="logo-dot">.</span>Excuse</div>
-      <div>
-        <div class="left-phrase">Pas de<br>relâche.<br><em>Pas d'alibi.</em></div>
-      </div>
-      <div class="left-foot">Tir à l'arc numérique — 2026</div>
+      <div><div class="left-phrase">Pas de<br>relâche.<br><em>Pas d'alibi.</em></div></div>
+      <div class="left-foot">Tir à l'arc numérique — 2025</div>
     </div>
   </div>
- 
-  <!-- DROITE -->
   <div class="right">
     <div class="form-wrap">
- 
       <div class="tabs">
         <div class="tab active" id="tab-login" onclick="switchTab('login')">Connexion</div>
         <div class="tab" id="tab-signup" onclick="switchTab('signup')">Créer un compte</div>
       </div>
- 
-      <!-- FORMULAIRE CONNEXION -->
+
+      <!-- CONNEXION -->
       <div id="form-login">
-        <div class="field">
-          <label>Adresse courriel</label>
-          <input type="email" id="login-email" placeholder="ton@email.com"/>
-        </div>
-        <div class="field">
-          <label>Mot de passe</label>
-          <input type="password" id="login-password" placeholder="••••••••"/>
-        </div>
-        <span class="forgot">Mot de passe oublié ?</span>
-        <button class="btn-main" onclick="handleLogin()">Se connecter</button>
-        <div class="error-msg" id="login-error"></div>
-        <div class="or-row">
-          <div class="or-line"></div>
-          <div class="or-txt">ou</div>
-          <div class="or-line"></div>
-        </div>
-        <button class="btn-google">
+        <div class="field"><label>Adresse courriel</label><input type="email" id="login-email" placeholder="ton@email.com"/></div>
+        <div class="field"><label>Mot de passe</label><input type="password" id="login-password" placeholder="••••••••"/></div>
+        <span class="forgot" onclick="handleForgot()">Mot de passe oublié ?</span>
+        <button class="btn-main" id="btn-login" onclick="handleLogin()">Se connecter</button>
+        <div class="msg" id="login-msg"></div>
+        <div class="or-row"><div class="or-line"></div><div class="or-txt">ou</div><div class="or-line"></div></div>
+        <button class="btn-google" onclick="handleGoogle()">
           <svg class="g-icon" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M5.27 9.76A7.08 7.08 0 0 1 19.07 12c0 .68-.06 1.34-.17 1.97H12v-3.73h7.43A7.08 7.08 0 0 0 5.27 9.76z"/>
-            <path fill="#34A853" d="M12 19.08a7.06 7.06 0 0 1-6.73-4.93l-3.47 2.69A11.99 11.99 0 0 0 12 24c3.24 0 5.95-1.18 7.94-3.1l-3.28-2.55A7.06 7.06 0 0 1 12 19.08z"/>
-            <path fill="#FBBC05" d="M5.27 14.15A7.12 7.12 0 0 1 4.92 12c0-.74.13-1.46.35-2.14L1.8 7.17A11.97 11.97 0 0 0 0 12c0 1.93.46 3.75 1.27 5.36l3.47-2.69-.47-.52z"/>
-            <path fill="#4285F4" d="M12 4.92c1.77 0 3.37.65 4.62 1.7l3.45-3.45A11.95 11.95 0 0 0 12 0 11.99 11.99 0 0 0 1.8 7.17l3.47 2.69A7.08 7.08 0 0 1 12 4.92z"/>
+            <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#4285F4" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
           Continuer avec Google
         </button>
       </div>
- 
-      <!-- FORMULAIRE INSCRIPTION -->
+
+      <!-- INSCRIPTION -->
       <div id="form-signup" style="display:none;">
-        <div class="field">
-          <label>Nom d'utilisateur</label>
-          <input type="text" id="signup-username" placeholder="ton_pseudo"/>
-        </div>
-        <div class="field">
-          <label>Adresse courriel</label>
-          <input type="email" id="signup-email" placeholder="ton@email.com"/>
-        </div>
-        <div class="field">
-          <label>Mot de passe</label>
-          <input type="password" id="signup-password" placeholder="Min. 11 caractères"/>
-        </div>
-        <button class="btn-main" onclick="handleSignup()">Créer mon compte</button>
-        <div class="error-msg" id="signup-error"></div>
-        <div class="or-row">
-          <div class="or-line"></div>
-          <div class="or-txt">ou</div>
-          <div class="or-line"></div>
-        </div>
-        <button class="btn-google">
+        <div class="field"><label>Adresse courriel</label><input type="email" id="signup-email" placeholder="ton@email.com"/></div>
+        <div class="field"><label>Mot de passe</label><input type="password" id="signup-password" placeholder="Min. 6 caractères"/></div>
+        <button class="btn-main" id="btn-signup" onclick="handleSignup()">Créer mon compte</button>
+        <div class="msg" id="signup-msg"></div>
+        <div class="or-row"><div class="or-line"></div><div class="or-txt">ou</div><div class="or-line"></div></div>
+        <button class="btn-google" onclick="handleGoogle()">
           <svg class="g-icon" viewBox="0 0 24 24">
-            <path fill="#EA4335" d="M5.27 9.76A7.08 7.08 0 0 1 19.07 12c0 .68-.06 1.34-.17 1.97H12v-3.73h7.43A7.08 7.08 0 0 0 5.27 9.76z"/>
-            <path fill="#34A853" d="M12 19.08a7.06 7.06 0 0 1-6.73-4.93l-3.47 2.69A11.99 11.99 0 0 0 12 24c3.24 0 5.95-1.18 7.94-3.1l-3.28-2.55A7.06 7.06 0 0 1 12 19.08z"/>
-            <path fill="#FBBC05" d="M5.27 14.15A7.12 7.12 0 0 1 4.92 12c0-.74.13-1.46.35-2.14L1.8 7.17A11.97 11.97 0 0 0 0 12c0 1.93.46 3.75 1.27 5.36l3.47-2.69-.47-.52z"/>
-            <path fill="#4285F4" d="M12 4.92c1.77 0 3.37.65 4.62 1.7l3.45-3.45A11.95 11.95 0 0 0 12 0 11.99 11.99 0 0 0 1.8 7.17l3.47 2.69A7.08 7.08 0 0 1 12 4.92z"/>
+            <path fill="#EA4335" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+            <path fill="#4285F4" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
           Continuer avec Google
         </button>
       </div>
- 
+
     </div>
   </div>
 </div>
- 
+
 <script>
+  // ── REMPLACE CES DEUX VALEURS PAR LES TIENNES ──
+  const SUPABASE_URL = 'sb_publishable_iYFfDGBjAsWvEPFUOZ2cQg_dX4kMoYN';
+  const SUPABASE_KEY = 'sb_publishable_iYFfDGBjAsWvEPFUOZ2cQg_dX4kMoYN';
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
   function switchTab(t) {
     document.getElementById('tab-login').classList.toggle('active', t === 'login');
     document.getElementById('tab-signup').classList.toggle('active', t === 'signup');
     document.getElementById('form-login').style.display = t === 'login' ? 'block' : 'none';
     document.getElementById('form-signup').style.display = t === 'signup' ? 'block' : 'none';
   }
- 
-  function handleLogin() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    const err = document.getElementById('login-error');
-    if (!email || !password) {
-      err.textContent = 'Remplis tous les champs.';
-      return;
-    }
-    if (!email.includes('@')) {
-      err.textContent = 'Adresse courriel invalide.';
-      return;
-    }
-    err.textContent = '';
-    // TODO: connecter à Supabase ici
-    alert('Connexion bientôt fonctionnelle — Supabase arrive !');
+
+  function setMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text;
+    el.className = 'msg ' + type;
   }
- 
-  function handleSignup() {
-    const username = document.getElementById('signup-username').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
+
+  async function handleLogin() {
+    const email    = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    if (!email || !password) { setMsg('login-msg', 'Remplis tous les champs.', 'error'); return; }
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true; btn.textContent = 'Connexion...';
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { setMsg('login-msg', error.message, 'error'); btn.disabled = false; btn.textContent = 'Se connecter'; return; }
+    setMsg('login-msg', 'Connecté ✓', 'success');
+    setTimeout(() => window.location.href = 'dashboard.html', 800);
+  }
+
+  async function handleSignup() {
+    const email    = document.getElementById('signup-email').value.trim();
     const password = document.getElementById('signup-password').value;
-    const err = document.getElementById('signup-error');
-    if (!username || !email || !password) {
-      err.textContent = 'Remplis tous les champs.';
-      return;
-    }
-    if (!email.includes('@')) {
-      err.textContent = 'Adresse courriel invalide.';
-      return;
-    }
-    if (password.length < 11) {
-      err.textContent = 'Mot de passe trop court (min. 11 caractères).';
-      return;
-    }
-    err.textContent = '';
-    // TODO: connecter à Supabase ici
-    alert('Inscription bientôt fonctionnelle — Supabase arrive !');
+    if (!email || !password) { setMsg('signup-msg', 'Remplis tous les champs.', 'error'); return; }
+    if (password.length < 6) { setMsg('signup-msg', 'Mot de passe trop court.', 'error'); return; }
+    const btn = document.getElementById('btn-signup');
+    btn.disabled = true; btn.textContent = 'Création...';
+    const { error } = await sb.auth.signUp({ email, password });
+    if (error) { setMsg('signup-msg', error.message, 'error'); btn.disabled = false; btn.textContent = 'Créer mon compte'; return; }
+    setMsg('signup-msg', 'Compte créé ! Vérifie ton courriel ✓', 'success');
+    btn.disabled = false; btn.textContent = 'Créer mon compte';
+  }
+
+  async function handleGoogle() {
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/dashboard.html' } });
+  }
+
+  async function handleForgot() {
+    const email = document.getElementById('login-email').value.trim();
+    if (!email) { setMsg('login-msg', 'Entre ton courriel d\'abord.', 'error'); return; }
+    const { error } = await sb.auth.resetPasswordForEmail(email);
+    if (error) { setMsg('login-msg', error.message, 'error'); return; }
+    setMsg('login-msg', 'Email de réinitialisation envoyé ✓', 'success');
   }
 </script>
- 
 </body>
 </html>
