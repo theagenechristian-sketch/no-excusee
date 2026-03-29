@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>No Excuse — Sessions</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{--bg:#252829;--bg2:#1e2021;--accent:#c0765a;--text:#f0ede8;--text2:rgba(240,237,232,0.5);--text3:rgba(240,237,232,0.25);--border:rgba(240,237,232,0.08);--green:#7ec89a;--sidebar:64px;}
+    *{cursor:none!important;}
+    html,body{height:100%;font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;}
+    #crosshair{position:fixed;width:36px;height:36px;pointer-events:none;z-index:99999;transform:translate(-50%,-50%);}
+    #crosshair.clicked{transform:translate(-50%,-50%) scale(0.7);}
+    .sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar);background:var(--bg2);border-right:0.5px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:24px 0;gap:28px;z-index:50;}
+    .sidebar-logo{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--accent);writing-mode:vertical-rl;text-transform:uppercase;}
+    .sidebar-divider{width:20px;height:0.5px;background:var(--border);}
+    .nav-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;opacity:0.3;text-decoration:none;transition:opacity .2s,background .2s;}
+    .nav-icon:hover{opacity:0.7;background:rgba(240,237,232,0.05);}
+    .nav-icon.active{opacity:1;background:rgba(192,118,90,0.12);}
+    .nav-icon svg{width:16px;height:16px;stroke:var(--text);fill:none;stroke-width:1.5;stroke-linecap:round;}
+    .sidebar-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:16px;}
+    .avatar-sm{width:32px;height:32px;border-radius:50%;background:rgba(192,118,90,0.2);border:0.5px solid rgba(192,118,90,0.4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--accent);}
+    .main{margin-left:var(--sidebar);padding:40px 44px;min-height:100vh;}
+    .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;opacity:0;transform:translateY(12px);animation:fadeUp 0.6s ease forwards 0.1s;}
+    .page-title{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;}
+    .page-title span{color:var(--text3);}
+    .add-btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;padding:10px 22px;background:var(--accent);border:none;border-radius:50px;color:#f0ede8;cursor:pointer;transition:opacity .2s;}
+    .add-btn:hover{opacity:0.85;}
+    .filters{display:flex;gap:8px;margin-bottom:28px;opacity:0;animation:fadeUp 0.6s ease forwards 0.2s;}
+    .filter-btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:7px 16px;border-radius:50px;border:0.5px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .2s;}
+    .filter-btn:hover{border-color:rgba(240,237,232,0.2);color:var(--text2);}
+    .filter-btn.active{background:var(--accent);border-color:var(--accent);color:#f0ede8;}
+    .sessions-list{display:flex;flex-direction:column;gap:8px;}
+    .session-card{background:var(--bg2);border-radius:10px;border:0.5px solid var(--border);padding:20px 24px;display:grid;grid-template-columns:70px 1fr auto auto;align-items:center;gap:20px;opacity:0;transform:translateY(14px);transition:background .2s,border-color .2s;}
+    .session-card.visible{animation:fadeUp 0.5s ease forwards;}
+    .session-card:hover{background:rgba(240,237,232,0.03);border-color:rgba(240,237,232,0.14);}
+    .sc-date strong{display:block;font-size:20px;font-weight:700;font-family:'Barlow Condensed',sans-serif;color:var(--text2);}
+    .sc-date span{font-size:10px;color:var(--text3);letter-spacing:0.08em;text-transform:uppercase;}
+    .sc-name{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;}
+    .sc-meta{display:flex;align-items:center;gap:12px;}
+    .sc-arrows{font-size:12px;color:var(--text3);}
+    .sc-tag{font-size:9px;letter-spacing:0.1em;text-transform:uppercase;padding:2px 8px;border-radius:3px;}
+    .tag-dist{background:rgba(133,179,235,0.12);color:#85b3eb;}
+    .tag-tech{background:rgba(192,118,90,0.12);color:var(--accent);}
+    .tag-comp{background:rgba(126,200,154,0.12);color:var(--green);}
+    .tag-libre{background:rgba(240,237,232,0.07);color:var(--text3);}
+    .sc-bar-wrap{width:110px;}
+    .sc-bar{height:2px;background:rgba(240,237,232,0.08);border-radius:1px;overflow:hidden;margin-bottom:5px;}
+    .sc-fill{height:100%;background:var(--accent);border-radius:1px;width:0;transition:width 1.2s cubic-bezier(.16,1,.3,1);}
+    .sc-bar-lbl{font-size:9px;color:var(--text3);text-align:right;}
+    .sc-score{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--text);text-align:right;min-width:56px;}
+    .sc-score span{display:block;font-family:'Barlow',sans-serif;font-size:9px;font-weight:400;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;}
+    .record-badge{font-size:8px;letter-spacing:0.12em;text-transform:uppercase;padding:2px 6px;border-radius:3px;background:rgba(192,118,90,0.2);color:var(--accent);display:inline-block;margin-top:3px;}
+    .empty-state{text-align:center;padding:80px 20px;opacity:0;animation:fadeUp 0.6s ease forwards 0.3s;}
+    .empty-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+    .empty-sub{font-size:13px;color:rgba(240,237,232,0.2);}
+    .modal-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(10,11,11,0.75);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);align-items:center;justify-content:center;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--bg2);border-radius:16px;border:0.5px solid rgba(240,237,232,0.12);padding:36px;width:100%;max-width:460px;animation:modalIn 0.4s cubic-bezier(.16,1,.3,1);}
+    @keyframes modalIn{from{opacity:0;transform:scale(0.96) translateY(10px);}to{opacity:1;transform:none;}}
+    .modal-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:28px;}
+    .form-field{margin-bottom:18px;}
+    .form-field label{display:block;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+    .form-field input,.form-field select,.form-field textarea{width:100%;background:rgba(240,237,232,0.05);border:0.5px solid rgba(240,237,232,0.12);border-radius:6px;padding:12px 14px;font-family:'Barlow',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s;}
+    .form-field input::placeholder,.form-field textarea::placeholder{color:var(--text3);}
+    .form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--accent);}
+    .form-field select option{background:var(--bg2);}
+    .form-field textarea{resize:none;height:80px;line-height:1.6;}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .modal-actions{display:flex;gap:10px;margin-top:24px;}
+    .btn-save{flex:1;padding:13px;background:var(--accent);border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:#f0ede8;cursor:pointer;transition:opacity .2s;}
+    .btn-save:hover{opacity:0.85;}
+    .btn-cancel{padding:13px 20px;background:transparent;border:0.5px solid var(--border);border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:var(--text3);cursor:pointer;transition:background .2s;}
+    .btn-cancel:hover{background:rgba(240,237,232,0.05);}
+    .msg{font-size:12px;margin-top:10px;min-height:16px;}
+    .msg.success{color:var(--green);}
+    .msg.error{color:#e07a5f;}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:none;}}
+    @media(max-width:768px){.main{padding:24px 16px;}.session-card{grid-template-columns:1fr auto;gap:12px;}.sc-bar-wrap{display:none;}}
+  </style>
+</head>
+<body>
+  <div id="crosshair"><svg viewBox="0 0 36 36" fill="none"><circle cx="18" cy="18" r="14" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/><circle cx="18" cy="18" r="2.5" fill="#c0765a" opacity="0.9"/><line x1="18" y1="2" x2="18" y2="12" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/><line x1="18" y1="24" x2="18" y2="34" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/><line x1="2" y1="18" x2="12" y2="18" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/><line x1="24" y1="18" x2="34" y2="18" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/></svg></div>
+  <aside class="sidebar">
+    <div class="sidebar-logo">NE</div><div class="sidebar-divider"></div>
+    <a class="nav-icon" href="dashboard.html"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></a>
+    <a class="nav-icon active" href="session.html"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></a>
+    <a class="nav-icon" href="journal.html"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></a>
+    <div class="sidebar-bottom">
+      <a class="nav-icon" href="profil.html"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+      <div class="avatar-sm">C</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="top-bar">
+      <div class="page-title">Sessions <span id="session-count"></span></div>
+      <button class="add-btn" onclick="openModal()">+ Nouvelle session</button>
+    </div>
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterSessions('all',this)">Toutes</button>
+      <button class="filter-btn" onclick="filterSessions('Distance',this)">Distance</button>
+      <button class="filter-btn" onclick="filterSessions('Technique',this)">Technique</button>
+      <button class="filter-btn" onclick="filterSessions('Comp',this)">Compétition</button>
+    </div>
+    <div class="sessions-list" id="sessions-list"></div>
+  </main>
+  <div class="modal-overlay" id="modal-overlay" onclick="handleOverlay(event)">
+    <div class="modal">
+      <div class="modal-title">Nouvelle session</div>
+      <div class="form-row">
+        <div class="form-field"><label>Date</label><input type="date" id="f-date"/></div>
+        <div class="form-field"><label>Type</label><select id="f-type"><option value="">Choisir...</option><option>Distance 18m</option><option>Distance 25m</option><option>Distance 50m</option><option>Technique pure</option><option>Compétition simulée</option><option>Entraînement libre</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-field"><label>Flèches tirées</label><input type="number" id="f-arrows" placeholder="ex: 72" min="1"/></div>
+        <div class="form-field"><label>Score (optionnel)</label><input type="number" id="f-score" placeholder="ex: 287"/></div>
+      </div>
+      <div class="form-field"><label>Notes</label><textarea id="f-notes" placeholder="Ressenti, corrections, observations..."></textarea></div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+        <button class="btn-save" onclick="saveSession()">Sauvegarder</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+  </div>
+  <script>
+    const ch=document.getElementById('crosshair');let mx=innerWidth/2,my=innerHeight/2,cx=mx,cy=my;
+    document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;});
+    (function loop(){cx+=(mx-cx)*.18;cy+=(my-cy)*.18;ch.style.left=cx+'px';ch.style.top=cy+'px';requestAnimationFrame(loop);})();
+    document.addEventListener('mousedown',()=>ch.classList.add('clicked'));
+    document.addEventListener('mouseup',()=>ch.classList.remove('clicked'));
+    const DEFAULT=[{date:'2025-03-27',type:'Distance 18m',arrows:72,score:287,notes:'Ancrage pas constant.'},{date:'2025-03-25',type:'Technique pure',arrows:48,score:null,notes:'Focus relâché.'},{date:'2025-03-22',type:'Compétition simulée',arrows:144,score:312,notes:'Meilleure session depuis 2 mois.'},{date:'2025-03-18',type:'Entraînement libre',arrows:60,score:241,notes:'Bonne énergie.'},{date:'2025-03-14',type:'Distance 25m',arrows:96,score:198,notes:'Distance plus longue.'}];
+    const getSessions=()=>JSON.parse(localStorage.getItem('ne-sessions')||'null')||DEFAULT;
+    const getTag=t=>t.includes('Distance')?'<span class="sc-tag tag-dist">Distance</span>':t.includes('Technique')?'<span class="sc-tag tag-tech">Technique</span>':t.includes('Comp')?'<span class="sc-tag tag-comp">Compétition</span>':'<span class="sc-tag tag-libre">Libre</span>';
+    let currentFilter='all';
+    function renderSessions(filter){
+      const sessions=getSessions();
+      const maxScore=Math.max(...sessions.map(s=>s.score||0));
+      const filtered=filter==='all'?sessions:sessions.filter(s=>s.type.includes(filter));
+      document.getElementById('session-count').textContent=`(${sessions.length})`;
+      const list=document.getElementById('sessions-list');
+      if(!filtered.length){list.innerHTML='<div class="empty-state"><div class="empty-title">Aucune session</div><div class="empty-sub">Commence à logger tes séances.</div></div>';return;}
+      list.innerHTML=filtered.map((s,i)=>{
+        const d=new Date(s.date);
+        const day=d.getDate().toString().padStart(2,'0');
+        const month=d.toLocaleDateString('fr-CA',{month:'short'});
+        const pct=s.score?Math.round((s.score/maxScore)*100):25;
+        const isRec=s.score&&s.score===maxScore;
+        return`<div class="session-card" style="animation-delay:${i*.07}s"><div class="sc-date"><strong>${day}</strong><span>${month}</span></div><div class="sc-info"><div class="sc-name">${s.type}</div><div class="sc-meta"><span class="sc-arrows">${s.arrows} flèches</span>${getTag(s.type)}</div></div><div class="sc-bar-wrap"><div class="sc-bar"><div class="sc-fill" data-w="${pct}"></div></div><div class="sc-bar-lbl">${pct}% du record</div></div><div class="sc-score">${s.score||'—'}<span>pts</span>${isRec?'<div class="record-badge">Record</div>':''}</div></div>`;
+      }).join('');
+      document.querySelectorAll('.session-card').forEach(card=>{
+        new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');e.target.querySelectorAll('.sc-fill').forEach(b=>b.style.width=b.dataset.w+'%');}});},{threshold:0.1}).observe(card);
+      });
+    }
+    function filterSessions(filter,btn){currentFilter=filter;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderSessions(filter);}
+    renderSessions('all');
+    function openModal(){document.getElementById('modal-overlay').classList.add('open');document.getElementById('f-date').value=new Date().toISOString().split('T')[0];document.getElementById('msg').textContent='';document.getElementById('msg').className='msg';}
+    function closeModal(){document.getElementById('modal-overlay').classList.remove('open');}
+    function handleOverlay(e){if(e.target===document.getElementById('modal-overlay'))closeModal();}
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+    function saveSession(){
+      const date=document.getElementById('f-date').value,type=document.getElementById('f-type').value,arrows=document.getElementById('f-arrows').value,score=document.getElementById('f-score').value,notes=document.getElementById('f-notes').value,msg=document.getElementById('msg');
+      if(!date||!type||!arrows){msg.textContent='Remplis la date, le type et les flèches.';msg.className='msg error';return;}
+      const sessions=getSessions();sessions.unshift({date,type,arrows:parseInt(arrows),score:score?parseInt(score):null,notes});
+      localStorage.setItem('ne-sessions',JSON.stringify(sessions));
+      msg.textContent='Session sauvegardée ✓';msg.className='msg success';
+      setTimeout(()=>{closeModal();renderSessions(currentFilter);},1000);
+    }
+  </script>
+</body>
+</html>

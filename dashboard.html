@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>No Excuse — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;700&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #252829; --bg2: #1e2021; --accent: #c0765a;
+      --text: #f0ede8; --text2: rgba(240,237,232,0.5);
+      --text3: rgba(240,237,232,0.25); --border: rgba(240,237,232,0.08);
+      --green: #7ec89a; --sidebar: 64px;
+    }
+    * { cursor: none !important; }
+    html, body { height: 100%; font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+    /* CROSSHAIR */
+    #crosshair { position: fixed; width: 36px; height: 36px; pointer-events: none; z-index: 99999; transform: translate(-50%,-50%); }
+    #crosshair.clicked { transform: translate(-50%,-50%) scale(0.7); }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: fixed; left: 0; top: 0; bottom: 0;
+      width: var(--sidebar);
+      background: var(--bg2);
+      border-right: 0.5px solid var(--border);
+      display: flex; flex-direction: column;
+      align-items: center; padding: 24px 0; gap: 28px;
+      z-index: 50;
+    }
+    .sidebar-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.16em; color: var(--accent);
+      writing-mode: vertical-rl; text-transform: uppercase;
+    }
+    .sidebar-divider { width: 20px; height: 0.5px; background: var(--border); }
+    .nav-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0.3; cursor: pointer;
+      transition: opacity .2s, background .2s;
+      text-decoration: none;
+    }
+    .nav-icon:hover { opacity: 0.7; background: rgba(240,237,232,0.05); }
+    .nav-icon.active { opacity: 1; background: rgba(192,118,90,0.12); }
+    .nav-icon svg { width: 16px; height: 16px; stroke: var(--text); fill: none; stroke-width: 1.5; stroke-linecap: round; }
+    .sidebar-bottom { margin-top: auto; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+    .avatar-sm {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(192,118,90,0.2);
+      border: 0.5px solid rgba(192,118,90,0.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* MAIN */
+    .main {
+      margin-left: var(--sidebar);
+      padding: 40px 44px;
+      min-height: 100vh;
+    }
+
+    /* TOP BAR */
+    .top-bar {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      opacity: 0; transform: translateY(12px);
+      animation: fadeUp 0.6s ease forwards 0.1s;
+    }
+    .greeting { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+    .greeting span { color: var(--text3); }
+    .top-right { display: flex; align-items: center; gap: 12px; }
+    .add-session-btn {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      padding: 10px 20px; background: var(--accent);
+      border: none; border-radius: 50px;
+      color: #f0ede8; cursor: pointer;
+      transition: opacity .2s;
+      text-decoration: none; display: inline-block;
+    }
+    .add-session-btn:hover { opacity: 0.85; }
+
+    /* STATS GRID */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px; margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg2); border-radius: 10px;
+      padding: 22px 20px;
+      border: 0.5px solid var(--border);
+      opacity: 0; transform: translateY(16px);
+      animation: fadeUp 0.6s ease forwards;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.15s; }
+    .stat-card:nth-child(2) { animation-delay: 0.22s; }
+    .stat-card:nth-child(3) { animation-delay: 0.29s; }
+    .stat-card:nth-child(4) { animation-delay: 0.36s; }
+    .stat-val {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 36px; font-weight: 700;
+      color: var(--text); letter-spacing: -0.02em; line-height: 1;
+    }
+    .stat-lbl { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text3); margin-top: 6px; }
+    .stat-trend { font-size: 11px; color: var(--green); margin-top: 10px; }
+
+    /* CONTENT GRID */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 10px;
+    }
+    .card {
+      background: var(--bg2); border-radius: 10px;
+      padding: 26px; border: 0.5px solid var(--border);
+      opacity: 0; transform: translateY(16px);
+    }
+    .card.visible { animation: fadeUp 0.7s ease forwards; }
+    .card-header {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 20px;
+    }
+    .card-title { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3); }
+    .card-action { font-size: 11px; color: var(--accent); cursor: pointer; text-decoration: none; }
+    .card-action:hover { opacity: 0.75; }
+
+    /* SESSIONS */
+    .session-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 11px 0; border-bottom: 0.5px solid var(--border);
+      transition: background .15s;
+    }
+    .session-row:last-child { border-bottom: none; }
+    .session-row:hover { background: rgba(240,237,232,0.02); margin: 0 -12px; padding-left: 12px; padding-right: 12px; border-radius: 6px; }
+    .s-date { font-size: 11px; color: var(--text3); min-width: 58px; letter-spacing: 0.04em; }
+    .s-name { font-size: 13px; color: var(--text2); min-width: 130px; }
+    .s-bar { flex: 1; height: 2px; background: rgba(240,237,232,0.08); border-radius: 1px; overflow: hidden; }
+    .s-fill { height: 100%; background: var(--accent); border-radius: 1px; width: 0; transition: width 1.2s cubic-bezier(.16,1,.3,1); }
+    .s-score { font-size: 13px; font-weight: 500; color: var(--text); min-width: 38px; text-align: right; }
+
+    /* CHART */
+    .chart-wrap { display: flex; align-items: flex-end; gap: 8px; height: 96px; padding-top: 8px; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; justify-content: flex-end; }
+    .bar-body {
+      width: 100%; background: var(--accent);
+      border-radius: 3px 3px 0 0; opacity: 0.65;
+      height: 0; transition: height 1.2s cubic-bezier(.16,1,.3,1), opacity .2s;
+      cursor: pointer;
+    }
+    .bar-body:hover { opacity: 1; }
+    .bar-body.empty { background: rgba(240,237,232,0.08); opacity: 1; }
+    .bar-lbl { font-size: 9px; color: var(--text3); letter-spacing: 0.06em; white-space: nowrap; }
+
+    /* JOURNAL */
+    .journal-full { grid-column: 1 / -1; }
+    .journal-entry { padding: 14px 0; border-bottom: 0.5px solid var(--border); }
+    .journal-entry:last-child { border-bottom: none; }
+    .je-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 7px; }
+    .je-date { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; }
+    .je-tag { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; }
+    .tag-dur { background: rgba(192,118,90,0.15); color: var(--accent); }
+    .tag-ok  { background: rgba(126,200,154,0.12); color: var(--green); }
+    .tag-focus { background: rgba(133,179,235,0.12); color: #85b3eb; }
+    .je-text { font-size: 13px; color: rgba(240,237,232,0.45); line-height: 1.65; }
+
+    /* MODAL LOGGER SESSION */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(10,11,11,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--bg2); border-radius: 16px;
+      border: 0.5px solid rgba(240,237,232,0.12);
+      padding: 36px; width: 100%; max-width: 440px;
+      animation: modalIn 0.4s cubic-bezier(.16,1,.3,1);
+    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: none; } }
+    .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 28px; }
+    .form-field { margin-bottom: 18px; }
+    .form-field label { display: block; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+    .form-field input, .form-field select, .form-field textarea {
+      width: 100%; background: rgba(240,237,232,0.05);
+      border: 0.5px solid rgba(240,237,232,0.12);
+      border-radius: 6px; padding: 12px 14px;
+      font-family: 'Barlow', sans-serif; font-size: 14px;
+      color: var(--text); outline: none;
+      transition: border-color .2s;
+    }
+    .form-field input::placeholder, .form-field textarea::placeholder { color: var(--text3); }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: var(--accent); }
+    .form-field select option { background: var(--bg2); }
+    .form-field textarea { resize: none; height: 80px; line-height: 1.6; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .btn-save { flex: 1; padding: 13px; background: var(--accent); border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: #f0ede8; cursor: pointer; transition: opacity .2s; }
+    .btn-save:hover { opacity: 0.85; }
+    .btn-cancel { padding: 13px 20px; background: transparent; border: 0.5px solid var(--border); border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text3); cursor: pointer; transition: background .2s; }
+    .btn-cancel:hover { background: rgba(240,237,232,0.05); }
+    .success-msg { font-size: 12px; color: var(--green); margin-top: 10px; min-height: 16px; }
+    .error-msg { font-size: 12px; color: #e07a5f; margin-top: 10px; min-height: 16px; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+    @media (max-width: 900px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .content-grid { grid-template-columns: 1fr; }
+      .main { padding: 28px 20px; }
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .sidebar { width: 48px; }
+      .main { margin-left: 48px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CROSSHAIR -->
+  <div id="crosshair">
+    <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="18" cy="18" r="14" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/>
+      <circle cx="18" cy="18" r="2.5" fill="#c0765a" opacity="0.9"/>
+      <line x1="18" y1="2"  x2="18" y2="12" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/>
+      <line x1="18" y1="24" x2="18" y2="34" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/>
+      <line x1="2"  y1="18" x2="12" y2="18" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/>
+      <line x1="24" y1="18" x2="34" y2="18" stroke="#c0765a" stroke-width="0.8" opacity="0.7"/>
+    </svg>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">NE</div>
+    <div class="sidebar-divider"></div>
+    <a class="nav-icon active" href="dashboard.html" title="Dashboard">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    </a>
+    <a class="nav-icon" href="session.html" title="Sessions">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </a>
+    <a class="nav-icon" href="journal.html" title="Journal">
+      <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    </a>
+    <div class="sidebar-bottom">
+      <a class="nav-icon" href="profil.html" title="Profil">
+        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </a>
+      <div class="avatar-sm">C</div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <div class="top-bar">
+      <div class="greeting">Bon retour, <span>Christ</span> 👋</div>
+      <div class="top-right">
+        <a class="add-session-btn" onclick="openModal()">+ Session</a>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-val" data-target="1248" id="stat-arrows">0</div>
+        <div class="stat-lbl">Flèches totales</div>
+        <div class="stat-trend">+72 cette semaine</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" data-target="24" id="stat-sessions">0</div>
+        <div class="stat-lbl">Sessions</div>
+        <div class="stat-trend">+3 ce mois</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" data-target="312" id="stat-best">0</div>
+        <div class="stat-lbl">Meilleur score</div>
+        <div class="stat-trend">Record perso</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" data-target="84" id="stat-days">0</div>
+        <div class="stat-lbl">Jours actifs</div>
+        <div class="stat-trend">Série en cours 🔥</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-grid">
+
+      <!-- Sessions -->
+      <div class="card" id="card-sessions">
+        <div class="card-header">
+          <div class="card-title">Dernières sessions</div>
+          <a class="card-action" href="session.html">Voir tout →</a>
+        </div>
+        <div class="session-row">
+          <div class="s-date">27 mars</div>
+          <div class="s-name">Distance 18m</div>
+          <div class="s-bar"><div class="s-fill" data-w="92"></div></div>
+          <div class="s-score">287</div>
+        </div>
+        <div class="session-row">
+          <div class="s-date">25 mars</div>
+          <div class="s-name">Technique pure</div>
+          <div class="s-bar"><div class="s-fill" data-w="55"></div></div>
+          <div class="s-score">—</div>
+        </div>
+        <div class="session-row">
+          <div class="s-date">22 mars</div>
+          <div class="s-name">Compétition sim.</div>
+          <div class="s-bar"><div class="s-fill" data-w="100"></div></div>
+          <div class="s-score">312</div>
+        </div>
+        <div class="session-row">
+          <div class="s-date">18 mars</div>
+          <div class="s-name">Entraînement libre</div>
+          <div class="s-bar"><div class="s-fill" data-w="70"></div></div>
+          <div class="s-score">241</div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="card" id="card-chart">
+        <div class="card-header">
+          <div class="card-title">Progression — 7 jours</div>
+        </div>
+        <div class="chart-wrap" id="chart-wrap">
+          <div class="bar-col"><div class="bar-body" data-h="40"></div><div class="bar-lbl">Lu</div></div>
+          <div class="bar-col"><div class="bar-body empty" data-h="0"></div><div class="bar-lbl">Ma</div></div>
+          <div class="bar-col"><div class="bar-body" data-h="65"></div><div class="bar-lbl">Me</div></div>
+          <div class="bar-col"><div class="bar-body empty" data-h="0"></div><div class="bar-lbl">Je</div></div>
+          <div class="bar-col"><div class="bar-body" data-h="80"></div><div class="bar-lbl">Ve</div></div>
+          <div class="bar-col"><div class="bar-body" data-h="100"></div><div class="bar-lbl">Sa</div></div>
+          <div class="bar-col"><div class="bar-body" data-h="45"></div><div class="bar-lbl">Di</div></div>
+        </div>
+      </div>
+
+      <!-- Journal -->
+      <div class="card journal-full" id="card-journal">
+        <div class="card-header">
+          <div class="card-title">Journal récent</div>
+          <a class="card-action" href="journal.html">Voir tout →</a>
+        </div>
+        <div class="journal-entry">
+          <div class="je-head"><div class="je-date">27 mars</div><div class="je-tag tag-dur">Dur</div></div>
+          <div class="je-text">Ancrage pas constant. Bras gauche bouge à la lâché. Faut recommencer à filmer les séances.</div>
+        </div>
+        <div class="journal-entry">
+          <div class="je-head"><div class="je-date">22 mars</div><div class="je-tag tag-ok">Solide</div></div>
+          <div class="je-text">Meilleure session depuis 2 mois. La routine de respiration change tout. Keep going.</div>
+        </div>
+        <div class="journal-entry">
+          <div class="je-head"><div class="je-date">18 mars</div><div class="je-tag tag-focus">Focus</div></div>
+          <div class="je-text">Travail sur le relâché. Concentration maximale sur la main arrière. Progrès notables.</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- MODAL LOGGER SESSION -->
+  <div class="modal-overlay" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal">
+      <div class="modal-title">Logger une session</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Date</label>
+          <input type="date" id="f-date"/>
+        </div>
+        <div class="form-field">
+          <label>Type de session</label>
+          <select id="f-type">
+            <option value="">Choisir...</option>
+            <option>Distance 18m</option>
+            <option>Distance 25m</option>
+            <option>Distance 50m</option>
+            <option>Technique pure</option>
+            <option>Compétition simulée</option>
+            <option>Entraînement libre</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Flèches tirées</label>
+          <input type="number" id="f-arrows" placeholder="ex: 72" min="1"/>
+        </div>
+        <div class="form-field">
+          <label>Score (optionnel)</label>
+          <input type="number" id="f-score" placeholder="ex: 287"/>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Notes rapides</label>
+        <textarea id="f-notes" placeholder="Ressenti, corrections, observations..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeModal()">Annuler</button>
+        <button class="btn-save" onclick="saveSession()">Sauvegarder</button>
+      </div>
+      <div class="success-msg" id="success-msg"></div>
+      <div class="error-msg" id="error-msg"></div>
+    </div>
+  </div>
+
+  <script>
+    // ── CROSSHAIR ──
+    const ch = document.getElementById('crosshair');
+    let mx = window.innerWidth/2, my = window.innerHeight/2, cx = mx, cy = my;
+    document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+    (function moveCH() { cx += (mx-cx)*0.18; cy += (my-cy)*0.18; ch.style.left = cx+'px'; ch.style.top = cy+'px'; requestAnimationFrame(moveCH); })();
+    document.addEventListener('mousedown', () => ch.classList.add('clicked'));
+    document.addEventListener('mouseup',   () => ch.classList.remove('clicked'));
+
+    // ── COUNT UP ──
+    function countUp(el, target, delay) {
+      setTimeout(() => {
+        let s = 0; const step = target / (900/16);
+        const t = setInterval(() => {
+          s = Math.min(s + step, target);
+          el.textContent = Math.round(s).toLocaleString();
+          if (s >= target) clearInterval(t);
+        }, 16);
+      }, delay);
+    }
+    countUp(document.getElementById('stat-arrows'),  1248, 200);
+    countUp(document.getElementById('stat-sessions'), 24,  300);
+    countUp(document.getElementById('stat-best'),    312,  350);
+    countUp(document.getElementById('stat-days'),     84,  400);
+
+    // ── SCROLL REVEAL CARDS ──
+    const cards = document.querySelectorAll('.card');
+    const cardObs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          // animate bars inside
+          e.target.querySelectorAll('.s-fill').forEach(b => { b.style.width = b.dataset.w + '%'; });
+          e.target.querySelectorAll('.bar-body').forEach(b => { b.style.height = b.dataset.h + '%'; });
+        }
+      });
+    }, { threshold: 0.15 });
+    cards.forEach(c => cardObs.observe(c));
+
+    // ── MODAL ──
+    function openModal() {
+      document.getElementById('modal-overlay').classList.add('open');
+      document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+      document.getElementById('success-msg').textContent = '';
+      document.getElementById('error-msg').textContent = '';
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('open');
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('modal-overlay')) closeModal();
+    }
+
+    function saveSession() {
+      const date   = document.getElementById('f-date').value;
+      const type   = document.getElementById('f-type').value;
+      const arrows = document.getElementById('f-arrows').value;
+      const score  = document.getElementById('f-score').value;
+      const notes  = document.getElementById('f-notes').value;
+      const err    = document.getElementById('error-msg');
+      const suc    = document.getElementById('success-msg');
+
+      if (!date || !type || !arrows) { err.textContent = 'Remplis au moins la date, le type et les flèches.'; suc.textContent = ''; return; }
+      err.textContent = '';
+
+      // Sauvegarde localStorage (Supabase arrive plus tard)
+      const sessions = JSON.parse(localStorage.getItem('ne-sessions') || '[]');
+      sessions.unshift({ date, type, arrows: parseInt(arrows), score: score ? parseInt(score) : null, notes });
+      localStorage.setItem('ne-sessions', JSON.stringify(sessions));
+
+      suc.textContent = 'Session sauvegardée ✓';
+      setTimeout(() => { closeModal(); suc.textContent = ''; }, 1200);
+    }
+
+    // Escape key ferme le modal
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  </script>
+</body>
+</html>
